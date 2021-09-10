@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   View,
@@ -7,34 +7,59 @@ import {
   TextInput,
   Platform,
   Keyboard,
-  FlatList
+  FlatList,
 } from 'react-native';
 
 import { Button } from '../components/Button';
 import { SkillCard } from '../components/SkillCard';
 
+interface SkillData {
+  id: string;
+  name: string;
+}
+
 export function Home() {
-  const [newSkill, setNewSkill] = useState('');
-  const [mySkills, setMySkills] = useState([]);
+  const [newSkill, setNewSkill] = useState<string>('');
+  const [mySkills, setMySkills] = useState<SkillData[]>([]);
+  const [greetings, setGreetings] = useState<string>('');
 
   function handleAddNewSkill() {
-    if(newSkill.trim() === '') return;
+    const data = {
+      id: String(new Date().getTime()),
+      name: newSkill
+    }
 
-    setMySkills(oldState => [ ...oldState, newSkill]);
+    if (newSkill.trim() === '') return;
+
+    setMySkills(oldState => [...oldState, data]);
     setNewSkill('');
 
     Keyboard.dismiss();
   }
 
-  function handleRemoveSkill(skill) {
-    setMySkills(oldState => mySkills.filter(item => item !== skill));
-    setNewSkill(skill);
-
+  function handleRemoveSkill(skill: SkillData) {
+    setMySkills(oldState => mySkills.filter(item => item.id !== skill.id));
+    setNewSkill(skill.name);
   }
+
+  useEffect(() => {
+    const currentHour = new Date().getHours();
+
+    if (currentHour < 12) {
+      setGreetings('Good Morning!');
+    } else if (currentHour >= 12 && currentHour < 18) {
+      setGreetings('Good Afternoon!');
+    } else {
+      setGreetings('Good Night!');
+    }
+
+  }, [mySkills]);
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome, Jakison</Text>
+
+      <Text style={styles.greetings}>{greetings}</Text>
 
       <TextInput
         style={styles.input}
@@ -44,18 +69,21 @@ export function Home() {
         value={newSkill}
       />
 
-     <Button onPress={handleAddNewSkill}/>
+      <Button
+        title="Add"
+        onPress={handleAddNewSkill}
+      />
 
-      <Text style={[styles.title, {marginVertical: 50}]}>My Skills</Text>
+      <Text style={[styles.title, { marginVertical: 50 }]}>My Skills</Text>
 
       <FlatList
         data={mySkills}
-        keyExtractor={item => item}
+        keyExtractor={item => item.id}
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
-        renderItem={({item}) => (
-          <SkillCard 
-            skill={item} 
+        renderItem={({ item }) => (
+          <SkillCard
+            skill={item.name}
             onPress={() => handleRemoveSkill(item)}
           />
         )}
@@ -85,16 +113,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
     borderRadius: 7,
   },
-  buttonSkill:{
-    backgroundColor: '#1F1E25',
-    padding: 15,
-    borderRadius: 50,
-    alignItems: 'center',
-    marginVertical: 10
-  },
-  textSkill: {
+  greetings: {
     color: '#FFF',
-    fontSize: 22,
-    fontWeight: 'bold',
-  },
+  }
 });
